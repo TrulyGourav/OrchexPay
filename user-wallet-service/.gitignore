@@ -1,0 +1,47 @@
+# =========================
+# Java / Spring Boot
+# =========================
+target/
+*.log
+*.class
+*.war
+*.ear
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle (if ever used)
+.gradle/
+build/
+
+# =========================
+# IntelliJ IDEA
+# =========================
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# =========================
+# VS Code
+# =========================
+.vscode/
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Logs & Temp
+# =========================
+logs/
+*.tmp
+
+# =========================
+# Environment files
+# =========================
+.env
+.env.*
