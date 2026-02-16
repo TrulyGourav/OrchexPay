@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: user-wallet-service
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:walletledger}
+    username: ${POSTGRES_USER:ledger}
+    password: ${POSTGRES_PASSWORD:ledger}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+
+  sql:
+    init:
+      mode: never
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: public
+        jdbc:
+          batch_size: 25
+    open-in-view: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+orchexpay:
+  jwt:
+    secret: ${JWT_SECRET:default-secret-min-256-bits-for-hs256-please-change-in-production-xyz}
+    roles-claim: roles
+    expiration-seconds: ${JWT_EXPIRATION_SECONDS:86400}
+  # Optional: bootstrap SYSTEM user for payout-orchestrator service-to-service auth
+  bootstrap:
+    system-user:
+      enabled: ${BOOTSTRAP_SYSTEM_USER:false}
+      password: ${BOOTSTRAP_SYSTEM_USER_PASSWORD:system}
+  outbox:
+    relay-interval-ms: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.orchexpay: INFO
+    org.springframework.kafka: WARN
+    org.hibernate.SQL: WARN
