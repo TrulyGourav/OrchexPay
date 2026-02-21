@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -80,11 +81,16 @@ public class PayoutController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             HttpServletRequest request) {
-        if (vendorId == null && merchantId == null) {
-            return ResponseEntity.badRequest().build();
-        }
         UserProfile current = requireCurrentUser(request);
         boolean admin = current.hasRole("ADMIN");
+        if (vendorId == null && merchantId == null) {
+            if (!admin) {
+                return ResponseEntity.badRequest().build();
+            }
+            Page<Payout> payouts = payoutRepository.findAll(
+                    PageRequest.of(page, Math.min(size, 100), Sort.by(Sort.Direction.DESC, "createdAt")));
+            return ResponseEntity.ok(payouts.map(this::toResponse));
+        }
         if (vendorId != null) {
             if (!admin && !current.getId().equals(vendorId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -162,25 +168,54 @@ public class PayoutController {
     }
 
     /**
-     * Call after bank success webhook. Confirms PENDING ledger entry and sets payout SETTLED.
+     * Call after bank success (or simulate completion). Confirms PENDING ledger entry and sets payout SETTLED.
+     * Allowed: ADMIN (any payout), MERCHANT (own merchant's payouts only). Vendor cannot confirm.
      */
     @PostMapping("/{payoutId}/confirm")
     public ResponseEntity<PayoutResponse> confirmPayout(
             @PathVariable UUID payoutId,
-            @RequestHeader(value = IDEMPOTENCY_KEY_HEADER, required = true) String idempotencyKey) {
-        Payout payout = orchestrationService.confirmPayout(payoutId, idempotencyKey);
+            @RequestHeader(value = IDEMPOTENCY_KEY_HEADER, required = true) String idempotencyKey,
+            HttpServletRequest request) {
+        UserProfile current = requireCurrentUser(request);
+        Payout payout = payoutRepository.findById(payoutId).orElse(null);
+        if (payout == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!canConfirmOrReverse(current, payout)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        String auth = request.getHeader("Authorization");
+        payout = orchestrationService.confirmPayout(payoutId, idempotencyKey, java.util.Optional.ofNullable(auth).filter(h -> h != null && !h.isBlank()));
         return ResponseEntity.ok(toResponse(payout));
     }
 
     /**
-     * Call after bank failure. Reverses PENDING ledger entry and sets payout FAILED.
+     * Call after bank failure (or simulate failure). Reverses PENDING ledger entry and sets payout FAILED.
+     * Allowed: ADMIN (any payout), MERCHANT (own merchant's payouts only). Vendor cannot reverse.
      */
     @PostMapping("/{payoutId}/reverse")
     public ResponseEntity<PayoutResponse> reversePayout(
             @PathVariable UUID payoutId,
-            @RequestHeader(value = IDEMPOTENCY_KEY_HEADER, required = true) String idempotencyKey) {
-        Payout payout = orchestrationService.reversePayout(payoutId, idempotencyKey);
+            @RequestHeader(value = IDEMPOTENCY_KEY_HEADER, required = true) String idempotencyKey,
+            HttpServletRequest request) {
+        UserProfile current = requireCurrentUser(request);
+        Payout payout = payoutRepository.findById(payoutId).orElse(null);
+        if (payout == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!canConfirmOrReverse(current, payout)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        String auth = request.getHeader("Authorization");
+        payout = orchestrationService.reversePayout(payoutId, idempotencyKey, java.util.Optional.ofNullable(auth).filter(h -> h != null && !h.isBlank()));
         return ResponseEntity.ok(toResponse(payout));
+    }
+
+    /** Only ADMIN or MERCHANT (for own merchant's payouts) can confirm/reverse. */
+    private static boolean canConfirmOrReverse(UserProfile current, Payout payout) {
+        if (current.hasRole("ADMIN")) return true;
+        if (current.hasRole("MERCHANT") && current.getMerchantId() != null && current.getMerchantId().equals(payout.getMerchantId())) return true;
+        return false;
     }
 
     private PendingOrderResponse toPendingOrderResponse(PendingOrder p) {

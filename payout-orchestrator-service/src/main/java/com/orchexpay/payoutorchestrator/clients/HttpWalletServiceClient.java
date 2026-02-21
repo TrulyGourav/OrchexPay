@@ -70,9 +70,10 @@ public class HttpWalletServiceClient implements WalletServiceClient {
     }
 
     @Override
-    public void confirmLedgerEntry(UUID entryId, String idempotencyKey) {
+    public void confirmLedgerEntry(UUID entryId, String idempotencyKey, Optional<String> requestBearerToken) {
         var headers = new HttpHeaders();
         headers.set(IDEMPOTENCY_KEY_HEADER, idempotencyKey);
+        requestBearerToken.filter(t -> t != null && !t.isBlank()).ifPresent(t -> headers.set(HttpHeaders.AUTHORIZATION, t.startsWith("Bearer ") ? t : "Bearer " + t));
         restTemplate.postForEntity(
                 walletServiceBaseUrl + "/api/v1/ledger-entries/" + entryId + "/confirm",
                 new HttpEntity<>(headers),
@@ -80,9 +81,10 @@ public class HttpWalletServiceClient implements WalletServiceClient {
     }
 
     @Override
-    public void reverseLedgerEntry(UUID entryId, String idempotencyKey) {
+    public void reverseLedgerEntry(UUID entryId, String idempotencyKey, Optional<String> requestBearerToken) {
         var headers = new HttpHeaders();
         headers.set(IDEMPOTENCY_KEY_HEADER, idempotencyKey);
+        requestBearerToken.filter(t -> t != null && !t.isBlank()).ifPresent(t -> headers.set(HttpHeaders.AUTHORIZATION, t.startsWith("Bearer ") ? t : "Bearer " + t));
         restTemplate.postForEntity(
                 walletServiceBaseUrl + "/api/v1/ledger-entries/" + entryId + "/reverse",
                 new HttpEntity<>(headers),

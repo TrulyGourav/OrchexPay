@@ -79,7 +79,7 @@ public class PayoutOrchestrationService {
      * Idempotent: if payout already SETTLED, returns existing payout without calling wallet again.
      */
     @Transactional
-    public Payout confirmPayout(UUID payoutId, String idempotencyKey) {
+    public Payout confirmPayout(UUID payoutId, String idempotencyKey, java.util.Optional<String> requestBearerToken) {
         Payout payout = payoutRepository.findById(payoutId).orElseThrow(() -> new IllegalArgumentException("Payout not found: " + payoutId));
         if (payout.getStatus() == PayoutStatus.SETTLED) {
             log.info("Idempotent confirm: payout {} already SETTLED", payoutId);
@@ -88,7 +88,7 @@ public class PayoutOrchestrationService {
         if (payout.getLedgerEntryId() == null) {
             throw new IllegalStateException("Payout has no ledger entry to confirm");
         }
-        walletServiceClient.confirmLedgerEntry(payout.getLedgerEntryId(), idempotencyKey);
+        walletServiceClient.confirmLedgerEntry(payout.getLedgerEntryId(), idempotencyKey, requestBearerToken != null ? requestBearerToken : java.util.Optional.empty());
         stateMachine.toSettled(payout);
         payout.setUpdatedAt(Instant.now());
         return payoutRepository.save(payout);
@@ -99,7 +99,7 @@ public class PayoutOrchestrationService {
      * Idempotent: if payout already FAILED, returns existing payout without calling wallet again.
      */
     @Transactional
-    public Payout reversePayout(UUID payoutId, String idempotencyKey) {
+    public Payout reversePayout(UUID payoutId, String idempotencyKey, java.util.Optional<String> requestBearerToken) {
         Payout payout = payoutRepository.findById(payoutId).orElseThrow(() -> new IllegalArgumentException("Payout not found: " + payoutId));
         if (payout.getStatus() == PayoutStatus.FAILED) {
             log.info("Idempotent reverse: payout {} already FAILED", payoutId);
@@ -108,7 +108,7 @@ public class PayoutOrchestrationService {
         if (payout.getLedgerEntryId() == null) {
             throw new IllegalStateException("Payout has no ledger entry to reverse");
         }
-        walletServiceClient.reverseLedgerEntry(payout.getLedgerEntryId(), idempotencyKey);
+        walletServiceClient.reverseLedgerEntry(payout.getLedgerEntryId(), idempotencyKey, requestBearerToken != null ? requestBearerToken : java.util.Optional.empty());
         stateMachine.toFailed(payout);
         payout.setUpdatedAt(Instant.now());
         return payoutRepository.save(payout);

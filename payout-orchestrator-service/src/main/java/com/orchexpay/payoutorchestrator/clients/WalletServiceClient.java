@@ -27,11 +27,21 @@ public interface WalletServiceClient {
         return reserveWallet(walletId, amount, currencyCode, referenceId, description, idempotencyKey, Optional.empty());
     }
 
-    /** Confirm PENDING entry after bank success. */
-    void confirmLedgerEntry(UUID entryId, String idempotencyKey);
+    /** Confirm PENDING entry after bank success. When requestBearerToken is present, forwards it so wallet-service authorizes (MERCHANT/ADMIN). */
+    void confirmLedgerEntry(UUID entryId, String idempotencyKey, Optional<String> requestBearerToken);
 
-    /** Reverse PENDING entry on bank failure; creates compensating CREDIT. */
-    void reverseLedgerEntry(UUID entryId, String idempotencyKey);
+    /** @deprecated Use {@link #confirmLedgerEntry(UUID, String, Optional)} with empty token. */
+    default void confirmLedgerEntry(UUID entryId, String idempotencyKey) {
+        confirmLedgerEntry(entryId, idempotencyKey, Optional.empty());
+    }
+
+    /** Reverse PENDING entry on bank failure; creates compensating CREDIT. When requestBearerToken is present, forwards it so wallet-service authorizes (MERCHANT/ADMIN). */
+    void reverseLedgerEntry(UUID entryId, String idempotencyKey, Optional<String> requestBearerToken);
+
+    /** @deprecated Use {@link #reverseLedgerEntry(UUID, String, Optional)} with empty token. */
+    default void reverseLedgerEntry(UUID entryId, String idempotencyKey) {
+        reverseLedgerEntry(entryId, idempotencyKey, Optional.empty());
+    }
 
     /** Atomic transfer (e.g. ESCROW → VENDOR + MAIN). Idempotent by (fromWalletId, referenceId). When requestBearerToken is present, forwards it so wallet-service authorizes as that user (e.g. MERCHANT). */
     TransferResultResponse transfer(UUID fromWalletId, String referenceId, String currencyCode, BigDecimal totalAmount, List<TransferLeg> legs, String description, String idempotencyKey, Optional<String> requestBearerToken);

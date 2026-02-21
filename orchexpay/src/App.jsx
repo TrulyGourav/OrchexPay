@@ -11,6 +11,7 @@ import MerchantList from './pages/admin/MerchantList';
 import WalletSearch from './pages/admin/WalletSearch';
 import TransactionExplorer from './pages/admin/TransactionExplorer';
 import FreezeWallet from './pages/admin/FreezeWallet';
+import PayoutManagement from './pages/admin/PayoutManagement';
 import SettlementReport from './pages/admin/SettlementReport';
 import MerchantDashboard from './pages/merchant/MerchantDashboard';
 import VendorManagement from './pages/merchant/VendorManagement';
@@ -20,6 +21,7 @@ import CommissionEarnings from './pages/merchant/CommissionEarnings';
 import EscrowBalance from './pages/merchant/EscrowBalance';
 import MerchantTransactions from './pages/merchant/MerchantTransactions';
 import OrderCompletion from './pages/merchant/OrderCompletion';
+import MerchantPayouts from './pages/merchant/MerchantPayouts';
 import PaymentRecords from './pages/merchant/PaymentRecords';
 import VendorDashboard from './pages/vendor/VendorDashboard';
 import VendorTransactions from './pages/vendor/VendorTransactions';
@@ -56,6 +58,7 @@ export default function App() {
         <Route path="merchants" element={<MerchantList />} />
         <Route path="wallets" element={<WalletSearch />} />
         <Route path="transactions" element={<TransactionExplorer />} />
+        <Route path="payouts" element={<PayoutManagement />} />
         <Route path="freeze" element={<FreezeWallet />} />
         <Route path="settlement" element={<SettlementReport />} />
       </Route>
@@ -76,6 +79,7 @@ export default function App() {
         <Route path="escrow" element={<EscrowBalance />} />
         <Route path="transactions" element={<MerchantTransactions />} />
         <Route path="order-complete" element={<OrderCompletion />} />
+        <Route path="payouts" element={<MerchantPayouts />} />
         <Route path="payments" element={<PaymentRecords />} />
       </Route>
 

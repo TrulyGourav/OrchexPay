@@ -8,6 +8,7 @@ const ADMIN_LINKS = [
   { to: '/admin/merchants', label: 'Merchants' },
   { to: '/admin/wallets', label: 'Wallet search' },
   { to: '/admin/transactions', label: 'Transactions' },
+  { to: '/admin/payouts', label: 'Payout management' },
   { to: '/admin/freeze', label: 'Freeze wallet' },
   { to: '/admin/settlement', label: 'Settlement' },
 ];
@@ -21,6 +22,7 @@ const MERCHANT_LINKS = [
   { to: '/merchant/escrow', label: 'Escrow' },
   { to: '/merchant/transactions', label: 'Transactions' },
   { to: '/merchant/order-complete', label: 'Complete order' },
+  { to: '/merchant/payouts', label: 'Vendor payouts' },
   { to: '/merchant/payments', label: 'Payments' },
 ];
 
