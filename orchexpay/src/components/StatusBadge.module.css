@@ -1,0 +1,18 @@
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+.confirmed { background: #d4edda; color: #155724; }
+.pending { background: #fff3cd; color: #856404; }
+.reversed { background: #f8d7da; color: #721c24; }
+.settled { background: #d4edda; color: #155724; }
+.failed { background: #f8d7da; color: #721c24; }
+.processing { background: #cce5ff; color: #004085; }
+.created { background: #e2e3e5; color: #383d41; }
+.active { background: #d4edda; color: #155724; }
+.suspended { background: #fff3cd; color: #856404; }
+.closed { background: #e2e3e5; color: #666; }
+.default { background: #e2e3e5; color: #333; }

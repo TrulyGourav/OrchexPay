@@ -1,0 +1,33 @@
+.wrapper {
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid #e0e0e0;
+  font-weight: 600;
+}
+.td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #eee;
+}
+.sortBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  padding: 0;
+}
+.sortBtn:hover {
+  text-decoration: underline;
+}
+.empty {
+  color: #666;
+  padding: 1rem;
+}
