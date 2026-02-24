@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PageHeader from '../../components/PageHeader';
 import ErrorMessage from '../../components/ErrorMessage';
+import CoinAnimation from '../../components/CoinAnimation';
 import DataTable from '../../components/DataTable';
 import { getAdminStats, getPayoutStats } from '../../api/admin';
 import { merchantsApi } from '../../api/merchants';
@@ -53,7 +54,10 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <PageHeader title="Admin dashboard" subtitle="Platform overview and insights" />
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', marginRight: '1.5rem' }}>
+        <PageHeader title="Admin dashboard" subtitle="Platform overview and insights" />
+        <CoinAnimation tagline="Ledger at a glance" />
+      </div>
       <ErrorMessage message={error} onDismiss={() => setError('')} />
 
       {loading ? (
