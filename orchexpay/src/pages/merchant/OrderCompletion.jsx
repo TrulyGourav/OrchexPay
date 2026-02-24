@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usersApi } from '../../api/users';
 import { merchantsApi } from '../../api/merchants';
@@ -14,6 +15,7 @@ export default function OrderCompletion() {
   const [tab, setTab] = useState('payment');
   const [profile, setProfile] = useState(null);
   const [vendors, setVendors] = useState([]);
+  const [hasCommission, setHasCommission] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [profileError, setProfileError] = useState('');
 
@@ -40,10 +42,15 @@ export default function OrderCompletion() {
     }
     setLoadingProfile(true);
     setProfileError('');
-    Promise.all([usersApi.getMe(), merchantsApi.listVendors(merchantId)])
-      .then(([meRes, vendorsRes]) => {
+    Promise.all([
+      usersApi.getMe(),
+      merchantsApi.listVendors(merchantId),
+      payoutApi.getCommission(merchantId).then((res) => !!res.data).catch(() => false),
+    ])
+      .then(([meRes, vendorsRes, commissionOk]) => {
         setProfile(meRes.data);
         setVendors(Array.isArray(vendorsRes.data) ? vendorsRes.data : []);
+        setHasCommission(commissionOk === true);
       })
       .catch((err) => setProfileError(err.response?.data?.message || err.message || 'Failed to load'))
       .finally(() => setLoadingProfile(false));
@@ -69,6 +76,10 @@ export default function OrderCompletion() {
     e.preventDefault();
     setError('');
     setMessage('');
+    if (!hasCommission) {
+      setError('Payment cannot be made unless commission is added. Please set commission in Commission settings first.');
+      return;
+    }
     if (!merchantId || !profile?.escrowWalletId) {
       setError('Escrow wallet not found. Refresh the page.');
       return;
@@ -187,6 +198,11 @@ export default function OrderCompletion() {
         {tab === 'payment' ? (
           <form onSubmit={runPaymentSuccess}>
             <p className={styles.muted}>Credit escrow for an order and associate it with a vendor (idempotent by orderId).</p>
+            {!loadingProfile && !hasCommission && (
+              <div role="alert" style={{ padding: '0.75rem', marginBottom: '1rem', background: '#fff3cd', border: '1px solid #ffc107', borderRadius: 4 }}>
+                <strong>Payment cannot be made unless commission is added.</strong> Please set your commission in <Link to="/merchant/commission">Commission</Link> settings first, then you can credit escrow here.
+              </div>
+            )}
             <div style={{ marginBottom: '0.75rem' }}>
               <label className={styles.label}>Vendor</label>
               <select
@@ -221,7 +237,7 @@ export default function OrderCompletion() {
               <label className={styles.label}>Escrow wallet ID</label>
               <input type="text" value={profile.escrowWalletId || ''} readOnly className={styles.input} style={{ width: '100%', background: '#f5f5f5' }} />
             </div>
-            <button type="submit" className={styles.btn} disabled={loading || vendors.length === 0}>
+            <button type="submit" className={styles.btn} disabled={loading || vendors.length === 0 || !hasCommission}>
               {loading ? 'Running...' : 'Credit escrow'}
             </button>
           </form>
