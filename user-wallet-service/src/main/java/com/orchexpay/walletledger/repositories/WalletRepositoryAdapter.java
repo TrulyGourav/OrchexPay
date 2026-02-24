@@ -6,6 +6,7 @@ import com.orchexpay.walletledger.enums.WalletType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,6 +25,11 @@ public class WalletRepositoryAdapter implements WalletRepository {
     @Override
     public Optional<Wallet> findById(UUID id) {
         return jpaWalletRepository.findById(id);
+    }
+
+    @Override
+    public List<Wallet> findAllById(Iterable<UUID> ids) {
+        return jpaWalletRepository.findAllById(ids);
     }
 
     @Override

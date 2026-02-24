@@ -20,6 +20,8 @@ public interface UserRepository {
 
     Optional<User> findByUsername(String username);
 
+    Optional<User> findFirstByMerchantId(UUID merchantId);
+
     boolean existsByUsername(String username);
 
     Page<User> findMerchantUsers(Pageable pageable);

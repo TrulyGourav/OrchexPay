@@ -4,6 +4,7 @@ import com.orchexpay.walletledger.models.Wallet;
 import com.orchexpay.walletledger.enums.WalletStatus;
 import com.orchexpay.walletledger.enums.WalletType;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,6 +16,8 @@ public interface WalletRepository {
     Wallet save(Wallet wallet);
 
     Optional<Wallet> findById(UUID id);
+
+    List<Wallet> findAllById(Iterable<UUID> ids);
 
     Optional<Wallet> findByMerchantIdAndCurrency(UUID merchantId, String currencyCode);
 

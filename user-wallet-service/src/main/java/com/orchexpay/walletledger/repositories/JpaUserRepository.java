@@ -26,6 +26,9 @@ public interface JpaUserRepository extends JpaRepository<User, UUID> {
             nativeQuery = true)
     List<User> findVendorUsersByMerchantId(@Param("merchantId") UUID merchantId);
 
+    /** Merchant user for the given merchant (one per merchantId). */
+    Optional<User> findFirstByMerchantId(UUID merchantId);
+
     @Query(value = "SELECT COUNT(*) FROM users WHERE roles LIKE '%MERCHANT%'", nativeQuery = true)
     long countMerchantUsers();
 
