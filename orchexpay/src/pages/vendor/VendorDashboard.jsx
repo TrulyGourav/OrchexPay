@@ -4,6 +4,7 @@ import { usersApi } from '../../api/users';
 import { getWalletApi } from '../../api/wallet';
 import PageHeader from '../../components/PageHeader';
 import ErrorMessage from '../../components/ErrorMessage';
+import CoinAnimation from '../../components/CoinAnimation';
 import styles from '../AdminShared.module.css';
 
 export default function VendorDashboard() {
@@ -32,7 +33,10 @@ export default function VendorDashboard() {
 
   return (
     <>
-      <PageHeader title="Vendor dashboard" subtitle={user?.username ? `Logged in as ${user.username}` : ''} />
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', marginRight: '1.5rem' }}>
+        <PageHeader title="Vendor dashboard" subtitle={user?.username ? `Logged in as ${user.username}` : ''} />
+        <CoinAnimation tagline="Your earnings, secured" />
+      </div>
       <ErrorMessage message={error} onDismiss={() => setError('')} />
       {loading ? <p>Loading...</p> : (
         <div className={styles.card}>
