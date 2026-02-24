@@ -2,6 +2,9 @@ package com.orchexpay.walletledger.controllers;
 
 import com.orchexpay.walletledger.dtos.LedgerEntryResponse;
 import com.orchexpay.walletledger.mappers.LedgerEntryMapper;
+import com.orchexpay.walletledger.models.Wallet;
+import com.orchexpay.walletledger.repositories.UserRepository;
+import com.orchexpay.walletledger.repositories.WalletRepository;
 import com.orchexpay.walletledger.services.EntriesFilter;
 import com.orchexpay.walletledger.services.GetLedgerEntriesUseCase;
 import com.orchexpay.walletledger.services.GetUserByUsernameUseCase;
@@ -29,8 +32,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Paginated, filterable ledger entries. Supports wallet-scoped or merchant-scoped queries.
@@ -45,6 +54,8 @@ public class EntriesController {
     private final GetWalletUseCase getWalletUseCase;
     private final GetUserByUsernameUseCase getUserByUsernameUseCase;
     private final LedgerEntryMapper ledgerEntryMapper;
+    private final WalletRepository walletRepository;
+    private final UserRepository userRepository;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MERCHANT', 'VENDOR')")
@@ -96,7 +107,40 @@ public class EntriesController {
         Sort order = parseSort(sort);
         Pageable pageable = PageRequest.of(page, Math.min(size, 100), order);
         Page<LedgerEntry> entries = getLedgerEntriesUseCase.execute(filter, pageable);
-        return ResponseEntity.ok(entries.map(ledgerEntryMapper::toResponse));
+        Map<UUID, String> walletIdToUsername = resolveWalletOwnerUsernames(entries.getContent());
+        return ResponseEntity.ok(entries.map(e -> ledgerEntryMapper.toResponse(e, walletIdToUsername.get(e.getWalletId()))));
+    }
+
+    /** Resolves wallet owner username for each distinct wallet in the entries (merchant user for MAIN/ESCROW, vendor user for VENDOR). */
+    private Map<UUID, String> resolveWalletOwnerUsernames(List<LedgerEntry> entries) {
+        if (entries == null || entries.isEmpty()) {
+            return Map.of();
+        }
+        Set<UUID> walletIds = entries.stream().map(LedgerEntry::getWalletId).collect(Collectors.toSet());
+        List<Wallet> wallets = walletRepository.findAllById(walletIds);
+        Set<UUID> vendorUserIds = wallets.stream().map(Wallet::getVendorUserId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Set<UUID> merchantIds = wallets.stream().filter(w -> w.getVendorUserId() == null).map(Wallet::getMerchantId).collect(Collectors.toSet());
+
+        Map<UUID, String> vendorIdToUsername = new HashMap<>();
+        for (UUID vid : vendorUserIds) {
+            userRepository.findById(vid).ifPresent(u -> vendorIdToUsername.put(vid, u.getUsername()));
+        }
+        Map<UUID, String> merchantIdToUsername = new HashMap<>();
+        for (UUID mid : merchantIds) {
+            userRepository.findFirstByMerchantId(mid).ifPresent(u -> merchantIdToUsername.put(mid, u.getUsername()));
+        }
+
+        Map<UUID, String> walletIdToUsername = new HashMap<>();
+        for (Wallet w : wallets) {
+            String username;
+            if (w.getVendorUserId() != null) {
+                username = vendorIdToUsername.getOrDefault(w.getVendorUserId(), "—");
+            } else {
+                username = merchantIdToUsername.getOrDefault(w.getMerchantId(), "—");
+            }
+            walletIdToUsername.put(w.getId(), username);
+        }
+        return walletIdToUsername;
     }
 
     private static ReferenceType parseReferenceType(String s) {
