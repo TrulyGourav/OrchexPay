@@ -25,4 +25,6 @@ public class LedgerEntryResponse {
     private String status;  // PENDING | CONFIRMED | REVERSED
     private String description;
     private Instant createdAt;
+    /** Username of the wallet owner (merchant user for MAIN/ESCROW, vendor user for VENDOR wallet). */
+    private String walletOwnerUsername;
 }
