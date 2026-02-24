@@ -5,6 +5,7 @@ import { usersApi } from '../../api/users';
 import { getWalletApi } from '../../api/wallet';
 import PageHeader from '../../components/PageHeader';
 import ErrorMessage from '../../components/ErrorMessage';
+import CoinAnimation from '../../components/CoinAnimation';
 import styles from '../AdminShared.module.css';
 
 export default function MerchantDashboard() {
@@ -48,7 +49,10 @@ export default function MerchantDashboard() {
 
   return (
     <>
-      <PageHeader title="Merchant dashboard" subtitle={user?.username ? `Logged in as ${user.username}` : ''} />
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', marginRight: '1.5rem' }}>
+        <PageHeader title="Merchant dashboard" subtitle={user?.username ? `Logged in as ${user.username}` : ''} />
+        <CoinAnimation tagline="Escrow & payouts in one place" />
+      </div>
       <ErrorMessage message={error} onDismiss={() => setError('')} />
       {loading ? (
         <p>Loading...</p>
