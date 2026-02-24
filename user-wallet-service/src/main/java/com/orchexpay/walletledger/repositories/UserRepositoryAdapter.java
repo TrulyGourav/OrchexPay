@@ -35,6 +35,11 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public Optional<User> findFirstByMerchantId(UUID merchantId) {
+        return jpaUserRepository.findFirstByMerchantId(merchantId);
+    }
+
+    @Override
     public boolean existsByUsername(String username) {
         return jpaUserRepository.existsByUsername(username);
     }

@@ -16,6 +16,10 @@ public class LedgerEntryMapper {
     }
 
     public LedgerEntryResponse toResponse(LedgerEntry entry) {
+        return toResponse(entry, null);
+    }
+
+    public LedgerEntryResponse toResponse(LedgerEntry entry, String walletOwnerUsername) {
         return LedgerEntryResponse.builder()
                 .id(entry.getId())
                 .walletId(entry.getWalletId())
@@ -27,6 +31,7 @@ public class LedgerEntryMapper {
                 .status(entry.getStatus() != null ? entry.getStatus().name() : null)
                 .description(entry.getDescription())
                 .createdAt(entry.getCreatedAt())
+                .walletOwnerUsername(walletOwnerUsername != null ? walletOwnerUsername : "")
                 .build();
     }
 
