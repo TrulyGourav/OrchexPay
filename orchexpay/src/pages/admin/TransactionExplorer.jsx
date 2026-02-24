@@ -29,11 +29,13 @@ export default function TransactionExplorer() {
 
 
   const columns = [
-    { key: 'id', label: 'Entry ID', render: (v) => v?.slice?.(0, 8) + '...' },
+    { key: 'id', label: 'Entry ID', render: (v) => (v ? String(v).slice(0, 8) + '…' : '') },
+    { key: 'walletOwnerUsername', label: 'Wallet owner' },
     { key: 'type', label: 'Type' },
-    { key: 'amount', label: 'Amount' },
+    { key: 'amount', label: 'Amount', render: (v) => v != null ? Number(v).toLocaleString() : '' },
     { key: 'currencyCode', label: 'Currency' },
     { key: 'referenceType', label: 'Ref type' },
+    { key: 'referenceId', label: 'Ref ID', render: (v) => (v ? String(v).slice(0, 12) + (String(v).length > 12 ? '…' : '') : '') },
     { key: 'status', label: 'Status' },
     { key: 'createdAt', label: 'Created', render: (v) => v ? new Date(v).toLocaleString() : '' },
   ];

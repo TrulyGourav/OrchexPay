@@ -9,6 +9,7 @@ import styles from '../AdminShared.module.css';
 
 const ENTRY_COLUMNS = [
   { key: 'id', label: 'Entry ID', render: (v) => (v ? String(v).slice(0, 8) + '…' : '') },
+  { key: 'walletOwnerUsername', label: 'Wallet owner' },
   { key: 'type', label: 'Type' },
   { key: 'amount', label: 'Amount', render: (v) => v != null ? Number(v).toLocaleString() : '' },
   { key: 'currencyCode', label: 'Currency' },
