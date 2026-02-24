@@ -10,8 +10,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Map;
+import java.util.UUID;
+
 /**
  * Calls user-wallet-service GET /api/v1/users/me with the request's Bearer token to resolve current user.
+ * Also supports GET /api/v1/users/{id} to resolve username by user id (for payout vendor display).
  */
 @Component
 public class WalletServiceMeClient {
@@ -44,6 +48,29 @@ public class WalletServiceMeClient {
                 throw new UnauthorizedException("Invalid or expired token");
             }
             throw e;
+        }
+    }
+
+    /** Resolve username by user id. Uses bearer token (merchant/admin) for auth. Returns null if 404/403. */
+    @SuppressWarnings("unchecked")
+    public String getUsername(UUID userId, String bearerToken) {
+        if (userId == null || bearerToken == null || bearerToken.isBlank()) {
+            return null;
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, bearerToken.startsWith("Bearer ") ? bearerToken : "Bearer " + bearerToken);
+        try {
+            var response = restTemplateNoAuth.exchange(
+                    walletServiceUrl + "/api/v1/users/" + userId,
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
+                    Map.class);
+            if (response.getBody() != null && response.getBody().containsKey("username")) {
+                return (String) response.getBody().get("username");
+            }
+            return null;
+        } catch (RestClientResponseException e) {
+            return null;
         }
     }
 

@@ -9,9 +9,12 @@ import com.orchexpay.walletledger.dtos.BankDetailsRequest;
 import com.orchexpay.walletledger.dtos.BankDetailsResponse;
 import com.orchexpay.walletledger.services.GetBankDetailsUseCase;
 import com.orchexpay.walletledger.services.GetCurrentUserProfileUseCase;
+import com.orchexpay.walletledger.services.GetUserByUsernameUseCase;
 import com.orchexpay.walletledger.services.SaveBankDetailsUseCase;
 import com.orchexpay.walletledger.enums.Role;
+import com.orchexpay.walletledger.models.User;
 import com.orchexpay.walletledger.models.VendorBankDetails;
+import com.orchexpay.walletledger.repositories.UserRepository;
 import com.orchexpay.walletledger.security.LedgerPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -36,9 +41,37 @@ public class UserController {
 
     private final CreateUserUseCase createUserUseCase;
     private final GetCurrentUserProfileUseCase getCurrentUserProfileUseCase;
+    private final GetUserByUsernameUseCase getUserByUsernameUseCase;
     private final GetBankDetailsUseCase getBankDetailsUseCase;
     private final SaveBankDetailsUseCase saveBankDetailsUseCase;
     private final UserMapper userMapper;
+    private final UserRepository userRepository;
+
+    /**
+     * Get minimal user info by id (id, username). Allowed: ADMIN; or same user; or MERCHANT viewing a user in their merchant (e.g. vendor).
+     */
+    @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponse> getById(@PathVariable UUID id, Authentication authentication) {
+        User current = getUserByUsernameUseCase.execute(((LedgerPrincipal) authentication.getPrincipal()).username());
+        if (current.hasRole(Role.ADMIN)) {
+            return userRepository.findById(id)
+                    .map(u -> ResponseEntity.ok(userMapper.toResponse(u)))
+                    .orElse(ResponseEntity.notFound().build());
+        }
+        if (current.getId().equals(id)) {
+            return userRepository.findById(id)
+                    .map(u -> ResponseEntity.ok(userMapper.toResponse(u)))
+                    .orElse(ResponseEntity.notFound().build());
+        }
+        if (current.hasRole(Role.MERCHANT) && current.getMerchantId() != null) {
+            return userRepository.findById(id)
+                    .filter(u -> current.getMerchantId().equals(u.getMerchantId()))
+                    .map(u -> ResponseEntity.ok(userMapper.toResponse(u)))
+                    .orElse(ResponseEntity.notFound().build());
+        }
+        return ResponseEntity.notFound().build();
+    }
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")

@@ -1,5 +1,6 @@
 package com.orchexpay.payoutorchestrator.controllers;
 
+import com.orchexpay.payoutorchestrator.clients.WalletServiceMeClient;
 import com.orchexpay.payoutorchestrator.models.PendingOrder;
 import com.orchexpay.payoutorchestrator.models.Payout;
 import com.orchexpay.payoutorchestrator.enums.PayoutStatus;
@@ -25,7 +26,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -42,12 +46,14 @@ public class PayoutController {
     private final PayoutOrchestrationService orchestrationService;
     private final PayoutRepository payoutRepository;
     private final MockWebhookService mockWebhookService;
+    private final WalletServiceMeClient walletServiceMeClient;
 
     public PayoutController(PayoutOrchestrationService orchestrationService, PayoutRepository payoutRepository,
-                            MockWebhookService mockWebhookService) {
+                            MockWebhookService mockWebhookService, WalletServiceMeClient walletServiceMeClient) {
         this.orchestrationService = orchestrationService;
         this.payoutRepository = payoutRepository;
         this.mockWebhookService = mockWebhookService;
+        this.walletServiceMeClient = walletServiceMeClient;
     }
 
     private static UserProfile requireCurrentUser(HttpServletRequest request) {
@@ -83,27 +89,42 @@ public class PayoutController {
             HttpServletRequest request) {
         UserProfile current = requireCurrentUser(request);
         boolean admin = current.hasRole("ADMIN");
+        String auth = request.getHeader("Authorization");
         if (vendorId == null && merchantId == null) {
             if (!admin) {
                 return ResponseEntity.badRequest().build();
             }
             Page<Payout> payouts = payoutRepository.findAll(
                     PageRequest.of(page, Math.min(size, 100), Sort.by(Sort.Direction.DESC, "createdAt")));
-            return ResponseEntity.ok(payouts.map(this::toResponse));
+            Map<UUID, String> vendorUsernameMap = resolveVendorUsernames(payouts.getContent(), auth);
+            return ResponseEntity.ok(payouts.map(p -> toResponse(p, vendorUsernameMap.get(p.getVendorId()))));
         }
         if (vendorId != null) {
             if (!admin && !current.getId().equals(vendorId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
             Page<Payout> payouts = payoutRepository.findByVendorIdOrderByCreatedAtDesc(vendorId, PageRequest.of(page, Math.min(size, 100)));
-            return ResponseEntity.ok(payouts.map(this::toResponse));
+            Map<UUID, String> vendorUsernameMap = resolveVendorUsernames(payouts.getContent(), auth);
+            return ResponseEntity.ok(payouts.map(p -> toResponse(p, vendorUsernameMap.get(p.getVendorId()))));
         } else {
             if (!admin && (current.getMerchantId() == null || !current.getMerchantId().equals(merchantId))) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
             Page<Payout> payouts = payoutRepository.findByMerchantIdOrderByCreatedAtDesc(merchantId, PageRequest.of(page, Math.min(size, 100)));
-            return ResponseEntity.ok(payouts.map(this::toResponse));
+            Map<UUID, String> vendorUsernameMap = resolveVendorUsernames(payouts.getContent(), auth);
+            return ResponseEntity.ok(payouts.map(p -> toResponse(p, vendorUsernameMap.get(p.getVendorId()))));
         }
+    }
+
+    private Map<UUID, String> resolveVendorUsernames(List<Payout> payouts, String auth) {
+        Map<UUID, String> map = new HashMap<>();
+        if (payouts == null || payouts.isEmpty() || auth == null || auth.isBlank()) return map;
+        Set<UUID> vendorIds = payouts.stream().map(Payout::getVendorId).filter(id -> id != null).collect(Collectors.toSet());
+        for (UUID vid : vendorIds) {
+            String username = walletServiceMeClient.getUsername(vid, auth);
+            map.put(vid, username != null ? username : "—");
+        }
+        return map;
     }
 
     /**
@@ -134,7 +155,9 @@ public class PayoutController {
         if (!admin && !payout.getVendorId().equals(current.getId()) && (current.getMerchantId() == null || !current.getMerchantId().equals(payout.getMerchantId()))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        return ResponseEntity.ok(toResponse(payout));
+        String auth = request.getHeader("Authorization");
+        String vendorUsername = (auth != null && !auth.isBlank()) ? walletServiceMeClient.getUsername(payout.getVendorId(), auth) : null;
+        return ResponseEntity.ok(toResponse(payout, vendorUsername != null ? vendorUsername : "—"));
     }
 
     @PostMapping("/request")
@@ -223,11 +246,16 @@ public class PayoutController {
     }
 
     private PayoutResponse toResponse(Payout p) {
+        return toResponse(p, null);
+    }
+
+    private PayoutResponse toResponse(Payout p, String vendorUsername) {
         return PayoutResponse.builder()
                 .id(p.getId())
                 .merchantId(p.getMerchantId())
                 .vendorId(p.getVendorId())
                 .vendorWalletId(p.getVendorWalletId())
+                .vendorUsername(vendorUsername != null ? vendorUsername : "—")
                 .amount(p.getAmount())
                 .currencyCode(p.getCurrencyCode())
                 .status(p.getStatus().name())
@@ -286,6 +314,7 @@ public class PayoutController {
         private UUID merchantId;
         private UUID vendorId;
         private UUID vendorWalletId;
+        private String vendorUsername;
         private java.math.BigDecimal amount;
         private String currencyCode;
         private String status;
@@ -296,6 +325,7 @@ public class PayoutController {
         public UUID getMerchantId() { return merchantId; }
         public UUID getVendorId() { return vendorId; }
         public UUID getVendorWalletId() { return vendorWalletId; }
+        public String getVendorUsername() { return vendorUsername; }
         public java.math.BigDecimal getAmount() { return amount; }
         public String getCurrencyCode() { return currencyCode; }
         public String getStatus() { return status; }
@@ -307,6 +337,7 @@ public class PayoutController {
             public PayoutResponseBuilder merchantId(UUID v) { r.merchantId = v; return this; }
             public PayoutResponseBuilder vendorId(UUID v) { r.vendorId = v; return this; }
             public PayoutResponseBuilder vendorWalletId(UUID v) { r.vendorWalletId = v; return this; }
+            public PayoutResponseBuilder vendorUsername(String v) { r.vendorUsername = v; return this; }
             public PayoutResponseBuilder amount(java.math.BigDecimal v) { r.amount = v; return this; }
             public PayoutResponseBuilder currencyCode(String v) { r.currencyCode = v; return this; }
             public PayoutResponseBuilder status(String v) { r.status = v; return this; }
