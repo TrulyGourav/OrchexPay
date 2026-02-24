@@ -26,6 +26,13 @@ public class CommissionService {
     }
 
     /**
+     * Returns true if the merchant has commission configured (required before accepting payments).
+     */
+    public boolean hasCommissionConfigured(UUID merchantId) {
+        return commissionRepository.findByMerchantId(merchantId).isPresent();
+    }
+
+    /**
      * Platform share (commission) for the given order amount. Vendor share = orderAmount - platformShare.
      */
     public BigDecimal computePlatformShare(UUID merchantId, BigDecimal orderAmount, String currencyCode) {

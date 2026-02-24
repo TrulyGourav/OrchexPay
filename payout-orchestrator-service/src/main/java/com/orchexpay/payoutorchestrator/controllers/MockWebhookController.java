@@ -37,20 +37,26 @@ public class MockWebhookController {
     /**
      * Simulates payment gateway success webhook. Credits merchant ESCROW. Idempotent by orderId.
      * Forwards request Authorization to wallet-service so the credit is performed as the authenticated merchant.
+     * Returns 422 if merchant has not configured commission.
      */
     @PostMapping("/payment-success")
-    public ResponseEntity<MockWebhookResponse> paymentSuccess(@Valid @RequestBody PaymentSuccessRequest request, HttpServletRequest httpRequest) {
-        String auth = httpRequest != null ? httpRequest.getHeader("Authorization") : null;
-        mockWebhookService.handlePaymentSuccess(
-                request.getMerchantId(),
-                request.getVendorId(),
-                request.getOrderId(),
-                request.getAmount(),
-                request.getCurrencyCode(),
-                request.getEscrowWalletId(),
-                Optional.ofNullable(auth).filter(h -> !h.isBlank()));
-        return ResponseEntity.status(HttpStatus.OK).body(
-                new MockWebhookResponse("payment_success", "Escrow credited for order " + request.getOrderId()));
+    public ResponseEntity<?> paymentSuccess(@Valid @RequestBody PaymentSuccessRequest request, HttpServletRequest httpRequest) {
+        try {
+            String auth = httpRequest != null ? httpRequest.getHeader("Authorization") : null;
+            mockWebhookService.handlePaymentSuccess(
+                    request.getMerchantId(),
+                    request.getVendorId(),
+                    request.getOrderId(),
+                    request.getAmount(),
+                    request.getCurrencyCode(),
+                    request.getEscrowWalletId(),
+                    Optional.ofNullable(auth).filter(h -> !h.isBlank()));
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    new MockWebhookResponse("payment_success", "Escrow credited for order " + request.getOrderId()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(new ErrorMessageBody(e.getMessage()));
+        }
     }
 
     /**
@@ -149,6 +155,16 @@ public class MockWebhookController {
             this.message = message;
         }
         public String getEvent() { return event; }
+        public String getMessage() { return message; }
+    }
+
+    /** Response body for validation/business rule errors (e.g. commission not set). */
+    public static class ErrorMessageBody {
+        private final String message;
+
+        public ErrorMessageBody(String message) {
+            this.message = message;
+        }
         public String getMessage() { return message; }
     }
 }

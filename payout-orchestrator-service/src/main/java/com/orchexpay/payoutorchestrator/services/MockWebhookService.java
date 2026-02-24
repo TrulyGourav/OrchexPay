@@ -35,8 +35,12 @@ public class MockWebhookService {
     /**
      * Simulates payment gateway success: credit merchant ESCROW and record pending order for vendor. Idempotent by orderId.
      * When requestBearerToken is present, it is forwarded to wallet-service so the credit is authorized as that user (e.g. MERCHANT).
+     * @throws IllegalStateException if merchant has not configured commission (payment cannot be made unless commission is added)
      */
     public void handlePaymentSuccess(UUID merchantId, UUID vendorId, String orderId, BigDecimal amount, String currencyCode, UUID escrowWalletId, java.util.Optional<String> requestBearerToken) {
+        if (!commissionService.hasCommissionConfigured(merchantId)) {
+            throw new IllegalStateException("Payment cannot be made unless commission is added. Please configure commission in Commission settings first.");
+        }
         UUID walletId = escrowWalletId != null ? escrowWalletId : walletServiceClient.getWalletByType(merchantId, currencyCode, "ESCROW", null);
         String idempotencyKey = "mock-payment-" + orderId;
         walletServiceClient.creditWallet(
