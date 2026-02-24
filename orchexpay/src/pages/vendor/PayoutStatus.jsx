@@ -19,6 +19,7 @@ const STATUS_LABELS = {
 export default function PayoutStatus() {
   const location = useLocation();
   const [vendorId, setVendorId] = useState(null);
+  const [vendorUsername, setVendorUsername] = useState('');
   const [walletBalance, setWalletBalance] = useState(null);
   const [data, setData] = useState({ content: [], totalElements: 0 });
   const [error, setError] = useState('');
@@ -35,6 +36,7 @@ export default function PayoutStatus() {
         return;
       }
       setVendorId(id);
+      setVendorUsername(me.data?.username ?? '');
       const [payoutsRes, walletRes] = await Promise.all([
         payoutApi.listPayouts({ vendorId: id, size: 50 }),
         vendorWalletId ? getWalletApi.getWallet(vendorWalletId).catch(() => null) : Promise.resolve(null),
@@ -56,6 +58,7 @@ export default function PayoutStatus() {
 
   const columns = [
     { key: 'id', label: 'Payout ID', render: (v) => (v ? String(v).slice(0, 8) + '...' : '—') },
+    { key: 'vendorUsername', label: 'Vendor', render: () => vendorUsername || '—' },
     { key: 'amount', label: 'Amount' },
     { key: 'currencyCode', label: 'Currency' },
     {

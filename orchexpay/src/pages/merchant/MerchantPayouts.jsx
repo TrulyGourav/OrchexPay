@@ -75,6 +75,7 @@ export default function MerchantPayouts() {
 
   const columns = [
     { key: 'id', label: 'Payout ID', render: (v) => (v ? String(v).slice(0, 8) + '...' : '—') },
+    { key: 'vendorUsername', label: 'Wallet owner', render: (v) => v ?? '—' },
     { key: 'amount', label: 'Amount' },
     { key: 'currencyCode', label: 'Currency' },
     { key: 'status', label: 'Status', render: (v, row) => <StatusBadge status={v} /> },
