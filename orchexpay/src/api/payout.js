@@ -11,6 +11,10 @@ export const payoutApi = {
   listPayouts(params = {}) {
     return payoutClient.get('/api/v1/payouts', { params: { page: 0, size: 20, ...params } });
   },
+  /** Merchant only: count of payouts in PROCESSING status for sidebar badge. */
+  getMerchantProcessingCount() {
+    return payoutClient.get('/api/v1/payouts/merchant/processing-count');
+  },
   /** Pending orders (payment success done, split not done) for a vendor. Returns [{ orderId, amount, currencyCode, createdAt }]. */
   listPendingOrders(merchantId, vendorId) {
     return payoutClient.get('/api/v1/payouts/pending-orders', { params: { merchantId, vendorId } });

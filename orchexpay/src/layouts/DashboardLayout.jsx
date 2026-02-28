@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { payoutApi } from '../api/payout';
 import styles from './DashboardLayout.module.css';
 
 const ADMIN_LINKS = [
@@ -22,7 +23,7 @@ const MERCHANT_LINKS = [
   { to: '/merchant/escrow', label: 'Escrow' },
   { to: '/merchant/transactions', label: 'Transactions' },
   { to: '/merchant/order-complete', label: 'Complete order' },
-  { to: '/merchant/payouts', label: 'Vendor payouts' },
+  { to: '/merchant/payouts', label: 'Vendor payouts', badgeKey: 'payouts' },
   { to: '/merchant/payments', label: 'Payments' },
 ];
 
@@ -34,10 +35,10 @@ const VENDOR_LINKS = [
   { to: '/vendor/bank', label: 'Bank details' },
 ];
 
-function NavLinks({ links, base }) {
+function NavLinks({ links }) {
   return (
     <nav className={styles.nav}>
-      {links.map(({ to, end, label }) => (
+      {links.map(({ to, end, label, badge }) => (
         <NavLink
           key={to}
           to={to}
@@ -45,6 +46,9 @@ function NavLinks({ links, base }) {
           className={({ isActive }) => (isActive ? styles.linkActive : styles.link)}
         >
           {label}
+          {badge != null && badge > 0 && (
+            <span className={styles.navBadge} aria-label={`${badge} pending`}>{badge > 99 ? '99+' : badge}</span>
+          )}
         </NavLink>
       ))}
     </nav>
@@ -54,8 +58,26 @@ function NavLinks({ links, base }) {
 export default function DashboardLayout({ role }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const links = role === 'ADMIN' ? ADMIN_LINKS : role === 'MERCHANT' ? MERCHANT_LINKS : VENDOR_LINKS;
+  const [processingCount, setProcessingCount] = useState(0);
+
+  const baseLinks = role === 'ADMIN' ? ADMIN_LINKS : role === 'MERCHANT' ? MERCHANT_LINKS : VENDOR_LINKS;
+  const links = role === 'MERCHANT'
+    ? baseLinks.map((link) =>
+        link.badgeKey === 'payouts'
+          ? { ...link, badge: processingCount }
+          : { ...link, badge: undefined }
+      )
+    : baseLinks.map((link) => ({ ...link, badge: undefined }));
+
+  useEffect(() => {
+    if (role !== 'MERCHANT') return;
+    payoutApi
+      .getMerchantProcessingCount()
+      .then((res) => setProcessingCount(res.data?.processingCount ?? 0))
+      .catch(() => setProcessingCount(0));
+  }, [role, location.pathname]);
 
   const handleLogout = () => {
     logout();
