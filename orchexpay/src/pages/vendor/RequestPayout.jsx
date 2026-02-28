@@ -19,9 +19,14 @@ export default function RequestPayout() {
     e.preventDefault();
     setError('');
     setResult(null);
-    const num = parseFloat(amount);
+    const trimmed = amount != null ? String(amount).trim() : '';
+    if (!trimmed) {
+      setError('Please enter an amount.');
+      return;
+    }
+    const num = parseFloat(trimmed);
     if (Number.isNaN(num) || num < 0.01) {
-      setError('Amount must be at least 0.01');
+      setError('Please enter a valid amount (at least 0.01).');
       return;
     }
     setLoading(true);
@@ -32,7 +37,15 @@ export default function RequestPayout() {
       );
       setResult(res.data);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to create payout');
+      const msg = err.response?.data?.message || err.message || '';
+      const status = err.response?.status;
+      if (status === 422 || (msg && String(msg).toLowerCase().includes('insufficient'))) {
+        setError('Insufficient balance. Please enter an amount not exceeding your available balance.');
+      } else if (msg) {
+        setError(msg);
+      } else {
+        setError('Failed to create payout.');
+      }
     } finally {
       setLoading(false);
     }
