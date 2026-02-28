@@ -88,3 +88,23 @@
 .quickLinks a:hover {
   text-decoration: underline;
 }
+
+.successBanner {
+  padding: 0.75rem 1rem;
+  background: #d4edda;
+  color: #155724;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+.successBannerDismiss {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: inherit;
+  padding: 0 0.25rem;
+}
