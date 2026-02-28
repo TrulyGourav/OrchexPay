@@ -181,16 +181,30 @@ export default function OrderCompletion() {
     );
   }
 
+  const paymentAmountValid = (() => {
+    const n = parseFloat(amount);
+    return !Number.isNaN(n) && n >= 0.01;
+  })();
+  const isPaymentFormComplete = !!paymentVendorId && !!orderId.trim() && paymentAmountValid;
+
   return (
     <>
       <PageHeader title="Order completion" subtitle="Payment success or order complete (split) for your merchant" />
       <ErrorMessage message={error} onDismiss={() => setError('')} />
       {message && <p style={{ color: 'green', marginBottom: '1rem' }}>{message}</p>}
-      <div style={{ marginBottom: '1rem' }}>
-        <button type="button" className={styles.btn} style={{ marginRight: '0.5rem' }} onClick={() => setTab('payment')}>
+      <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          className={tab === 'payment' ? styles.tabButtonActive : styles.tabButton}
+          onClick={() => setTab('payment')}
+        >
           Payment success
         </button>
-        <button type="button" className={styles.btn} onClick={() => setTab('order')}>
+        <button
+          type="button"
+          className={tab === 'order' ? styles.tabButtonActive : styles.tabButton}
+          onClick={() => setTab('order')}
+        >
           Order complete (split)
         </button>
       </div>
@@ -237,7 +251,7 @@ export default function OrderCompletion() {
               <label className={styles.label}>Escrow wallet ID</label>
               <input type="text" value={profile.escrowWalletId || ''} readOnly className={styles.input} style={{ width: '100%', background: '#f5f5f5' }} />
             </div>
-            <button type="submit" className={styles.btn} disabled={loading || vendors.length === 0 || !hasCommission}>
+            <button type="submit" className={styles.btn} disabled={loading || vendors.length === 0 || !hasCommission || !isPaymentFormComplete}>
               {loading ? 'Running...' : 'Credit escrow'}
             </button>
           </form>

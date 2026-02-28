@@ -43,6 +43,33 @@
   opacity: 0.7;
 }
 
+.tabButton {
+  padding: 0.5rem 1rem;
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.tabButton:hover {
+  background: #eee;
+  border-color: #999;
+}
+.tabButtonActive {
+  padding: 0.5rem 1rem;
+  background: #e94560;
+  color: #fff;
+  border: 1px solid #e94560;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.tabButtonActive:hover {
+  background: #c73e54;
+  border-color: #c73e54;
+}
+
 .statCard {
   background: #fff;
   border-radius: 8px;
