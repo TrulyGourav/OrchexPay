@@ -49,7 +49,7 @@ export default function Login() {
 
   return (
     <div className={styles.card}>
-      <h1 className={styles.title}>LedgerX</h1>
+      <h1 className={styles.title}>OrchexPay</h1>
       <p className={styles.subtitle}>Sign in</p>
       <form onSubmit={handleSubmit} className={styles.form}>
         <label className={styles.label}>Quick login (select to fill)</label>

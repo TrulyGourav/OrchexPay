@@ -74,7 +74,7 @@ export default function DashboardLayout({ role }) {
           >
             ≡
           </button>
-          <span className={styles.logo}>LedgerX</span>
+          <span className={styles.logo}>OrchexPay</span>
           <span className={styles.user}>
             {user?.username} <span className={styles.role}>({role})</span>
           </span>

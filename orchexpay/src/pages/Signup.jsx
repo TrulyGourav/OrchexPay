@@ -48,7 +48,7 @@ export default function Signup() {
 
   return (
     <div className={styles.card}>
-      <h1 className={styles.title}>LedgerX</h1>
+      <h1 className={styles.title}>OrchexPay</h1>
       <p className={styles.subtitle}>Register as Merchant</p>
       <form onSubmit={handleSubmit} className={styles.form}>
         <label className={styles.label}>Username</label>
