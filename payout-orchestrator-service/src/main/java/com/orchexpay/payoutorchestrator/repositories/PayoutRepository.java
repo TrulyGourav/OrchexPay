@@ -20,6 +20,8 @@ public interface PayoutRepository extends JpaRepository<Payout, UUID> {
 
     Page<Payout> findByMerchantIdOrderByCreatedAtDesc(UUID merchantId, Pageable pageable);
 
+    long countByMerchantIdAndStatus(UUID merchantId, PayoutStatus status);
+
     long countByStatus(PayoutStatus status);
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payout p WHERE p.status = :status")

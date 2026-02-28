@@ -80,6 +80,20 @@ public class PayoutController {
         return ResponseEntity.ok(new PayoutStatsResponse(totalPayouts, createdCount, processingCount, settledCount, failedCount, totalSettledAmount));
     }
 
+    /**
+     * For MERCHANT: returns count of payouts in PROCESSING status for the current user's merchant.
+     * Used by the UI to show a badge on "Vendor payouts" in the sidebar.
+     */
+    @GetMapping("/merchant/processing-count")
+    public ResponseEntity<Map<String, Long>> merchantProcessingCount(HttpServletRequest request) {
+        UserProfile current = requireCurrentUser(request);
+        if (!current.hasRole("MERCHANT") || current.getMerchantId() == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        long count = payoutRepository.countByMerchantIdAndStatus(current.getMerchantId(), PayoutStatus.PROCESSING);
+        return ResponseEntity.ok(Map.of("processingCount", count));
+    }
+
     @GetMapping
     public ResponseEntity<Page<PayoutResponse>> list(
             @RequestParam(required = false) UUID vendorId,
