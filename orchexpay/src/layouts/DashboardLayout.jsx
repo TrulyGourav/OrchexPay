@@ -61,6 +61,7 @@ export default function DashboardLayout({ role }) {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [processingCount, setProcessingCount] = useState(0);
+  const [showAck, setShowAck] = useState(true);
 
   const baseLinks = role === 'ADMIN' ? ADMIN_LINKS : role === 'MERCHANT' ? MERCHANT_LINKS : VENDOR_LINKS;
   const links = role === 'MERCHANT'
@@ -84,8 +85,26 @@ export default function DashboardLayout({ role }) {
     navigate('/login');
   };
 
+  const handleAck = () => setShowAck(false);
+
   return (
     <div className={styles.layout}>
+      {showAck && (
+        <div className={styles.ackOverlay} role="dialog" aria-modal="true" aria-labelledby="ack-title">
+          <div className={styles.ackModal}>
+            <h2 id="ack-title" className={styles.ackModalTitle}>Please acknowledge</h2>
+            <p className={styles.ackModalBody}>
+              This project is <strong>Backend and System Design &amp; Architecture</strong> oriented. The focus is on APIs, services, data flows, and domain logic. The interface you see is kept minimal yet user friendly.
+            </p>
+            <p className={styles.ackModalBody} style={{ marginBottom: '1rem', fontSize: '0.9rem', color: '#666' }}>
+              By continuing, you acknowledge that you understand this context (e.g. as a recruiter or reviewer).
+            </p>
+            <button type="button" className={styles.ackModalBtn} onClick={handleAck}>
+              I understand
+            </button>
+          </div>
+        </div>
+      )}
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <button

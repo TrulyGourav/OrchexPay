@@ -137,3 +137,49 @@
 @media (max-width: 768px) {
   .overlay { display: block; }
 }
+
+/* Acknowledgment popup (backend/system-design disclaimer) */
+.ackOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.ackModal {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  max-width: 420px;
+  width: 100%;
+  padding: 1.5rem;
+}
+.ackModalTitle {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+.ackModalBody {
+  margin: 0 0 1.25rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #444;
+}
+.ackModalBtn {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: #e94560;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ackModalBtn:hover {
+  background: #c73e54;
+}
